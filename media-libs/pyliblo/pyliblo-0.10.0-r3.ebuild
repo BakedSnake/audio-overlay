@@ -5,6 +5,7 @@ EAPI=8
 
 PYTHON_COMPAT=( python3_{11..14} )
 DISTUTILS_USE_PEP517=setuptools
+DISTUTILS_EXT=1
 inherit distutils-r1
 
 DESCRIPTION="A Python wrapper for the liblo OSC library"
@@ -20,6 +21,8 @@ RDEPEND=">=media-libs/liblo-0.32
 	${PYTHON_DEPS}"
 DEPEND="${RDEPEND}
 	>=dev-python/cython-3.2.4[${PYTHON_USEDEP}]"
-BDEPEND=">=dev-lang/python-3.11.15[test] >=media-libs/liblo-0.32"
+BDEPEND=">=dev-lang/python-3.11.15[test]
+	>=media-libs/liblo-0.32
+	>=dev-python/cython-3.2.4[${PYTHON_USEDEP}]"
 
 distutils_enable_tests unittest
