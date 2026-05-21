@@ -1,18 +1,16 @@
 # Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 DESCRIPTION="A set of free reverb effects"
 HOMEPAGE="https://github.com/michaelwillis/dragonfly-reverb"
 if [[ ${PV} == *9999 ]]; then
-	inherit git-r3 autotools
+	inherit git-r3
 	EGIT_REPO_URI="https://github.com/michaelwillis/dragonfly-reverb.git"
-	KEYWORDS=""
 else
-	SRC_URI="https://github.com/michaelwillis/dragonfly-reverb/releases/download/${PV}/DragonflyReverb-Source-v${PV}.tar.gz"
+	SRC_URI="https://github.com/michaelwillis/dragonfly-reverb/releases/download/${PV}/${P}-src.tar.xz"
 	KEYWORDS="~amd64"
-	S="${WORKDIR}/DragonflyReverb-Source-v${PV}"
 fi
 LICENSE="GPL-3"
 SLOT="0"
