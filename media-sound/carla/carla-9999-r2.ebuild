@@ -1,15 +1,14 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10,11} )
+PYTHON_COMPAT=( python3_{12..15} )
 inherit python-single-r1 xdg-utils
 
 DESCRIPTION="Fully-featured audio plugin host, supports many audio drivers and plugin formats"
 HOMEPAGE="http://kxstudio.linuxaudio.org/Applications:Carla"
 if [[ ${PV} == *9999 ]]; then
-	# Disable submodules to prevent external plugins from being built and installed
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/falkTX/Carla.git"
 	EGIT_SUBMODULES=()
@@ -22,11 +21,11 @@ fi
 LICENSE="GPL-2 LGPL-3"
 SLOT="0"
 
-IUSE="alsa gtk gtk2 opengl osc pulseaudio rdf sf2 sndfile X"
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+IUSE="alsa gtk gtk2 opengl osc pulseaudio rdf sf2 sndfile X ffmpeg"
+REQUIRED_USE="${PYTHON_REQUIRED_USE} X" # with pugl build fails
 
 RDEPEND="${PYTHON_DEPS}
-	$(python_gen_cond_dep 'dev-python/pyqt5[gui,opengl?,svg,widgets,${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep '>=dev-python/pyqt6-6.10.2[gui,opengl,svg,widgets,${PYTHON_USEDEP}]')
 	virtual/jack
 	alsa? ( media-libs/alsa-lib )
 	gtk? ( x11-libs/gtk+:3 )
@@ -39,7 +38,9 @@ RDEPEND="${PYTHON_DEPS}
 	rdf? ( dev-python/rdflib )
 	sf2? ( media-sound/fluidsynth )
 	sndfile? ( media-libs/libsndfile )
-	X? ( x11-base/xorg-server )"
+	ffmpeg? ( media-video/ffmpeg )
+	X? ( x11-libs/libX11 )
+	!X? ( gui-libs/pugl:= )" # when [-X], but this still does not work
 DEPEND=${RDEPEND}
 
 src_prepare() {
@@ -59,13 +60,16 @@ src_compile() {
 	myemakeargs=(
 		LIBDIR="/usr/$(get_libdir)"
 		SKIP_STRIPPING=true
-		HAVE_FFMPEG=false
 		HAVE_ZYN_DEPS=false
 		HAVE_ZYN_UI_DEPS=false
 		HAVE_QT4=false
-		HAVE_QT5=true
-		HAVE_PYQT5=true
-		DEFAULT_QT=5
+		HAVE_QT5=false
+		HAVE_QT6=true
+		HAVE_PYQT5=false
+		HAVE_PYQT6=true
+		DEFAULT_QT=6
+		HAVE_FFMPEG=$(usex ffmpeg true false)
+		HAVE_X11=$(usex X true false)
 		HAVE_ALSA=$(usex alsa true false)
 		HAVE_FLUIDSYNTH=$(usex sf2 true false)
 		HAVE_GTK2=$(usex gtk2 true false)
@@ -73,7 +77,6 @@ src_compile() {
 		HAVE_LIBLO=$(usex osc true false)
 		HAVE_PULSEAUDIO=$(usex pulseaudio true false)
 		HAVE_SNDFILE=$(usex sndfile true false)
-		HAVE_X11=$(usex X true false)
 	)
 
 	# Print which options are enabled/disabled
