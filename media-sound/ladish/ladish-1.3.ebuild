@@ -6,15 +6,14 @@ EAPI=8
 PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE='threads(+)'
 
-inherit flag-o-matic python-single-r1 waf-utils git-r3
+inherit flag-o-matic python-single-r1 waf-utils
 
 DESCRIPTION="LADI Session Handler - a session management system for JACK applications"
 HOMEPAGE="https://ladish.org"
-EGIT_REPO_URI="https://github.com/LADI/${PN}.git"
-EGIT_BRANCH="main"
+SRC_URI="https://github.com/LADI/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 
 IUSE="debug doc lash gtk"
 RESTRICT="mirror"
@@ -23,7 +22,6 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RDEPEND="media-libs/alsa-lib
 	media-sound/jack2[dbus]
 	sys-apps/dbus
-	dev-libs/cdbus
 	dev-libs/expat
 	lash? ( !media-sound/lash )
 	gtk? (
@@ -32,20 +30,18 @@ RDEPEND="media-libs/alsa-lib
 		dev-libs/cdbus
 	)
 	${PYTHON_DEPS}"
-DEPEND="${RDEPEND}"
-BDEPEND="
+DEPEND="${RDEPEND}
+	doc? ( app-text/doxygen )
 	dev-util/intltool
-	virtual/pkgconfig
+	virtual/pkgconfig"
 
-	doc? ( app-text/doxygen )"
-
+DOCS=( AUTHORS NEWS )
 QA_SONAME=( ".*/libalsapid.so" )
 
-src_prepare()
-{
-	rm -rf ".git" || die "Failed to remove git dir"
+src_prepare() {
 	sed -i -e "s/RELEASE = False/RELEASE = True/" wscript
 	append-cxxflags '-std=c++11'
+
 	default
 }
 
@@ -68,5 +64,4 @@ src_install() {
 
 	waf-utils_src_install
 	python_fix_shebang "${ED}"
-	rm "${ED}/usr/share/ladish/COPYING" || die 'failed to remove "COYPING".'
 }

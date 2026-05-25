@@ -1,30 +1,22 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-PYTHON_COMPAT=( python3_{10,11} )
+PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE='threads(+)'
 
 inherit flag-o-matic python-single-r1 waf-utils
 
 DESCRIPTION="LADI Session Handler - a session management system for JACK applications"
 HOMEPAGE="https://ladish.org"
-if [[ ${PV} == *9999 ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://git.nedk.org/lad/ladish.git"
-	EGIT_SUBMODULES=()
-else
-	inherit vcs-snapshot
-	SRC_URI="https://github.com/LADI/ladish/archive/${P}.tar.gz
-		https://gitea.ladish.org/LADI/ladish/raw/commit/30994438a1363306f00078a5791202cc4a73151f/waf -> ${P}-waf-2.0.22"
-	KEYWORDS="~amd64"
-fi
+SRC_URI="https://github.com/LADI/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
-RESTRICT="mirror"
+KEYWORDS="~amd64"
 
-IUSE="debug doc lash"
+IUSE="debug doc lash gtk"
+RESTRICT="mirror"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="media-libs/alsa-lib
@@ -32,28 +24,23 @@ RDEPEND="media-libs/alsa-lib
 	sys-apps/dbus
 	dev-libs/expat
 	lash? ( !media-sound/lash )
+	gtk? (
+		x11-libs/gtk+:2
+		gui-libs/libgnomecanvasmm
+		dev-libs/cdbus
+	)
 	${PYTHON_DEPS}"
 DEPEND="${RDEPEND}
 	doc? ( app-text/doxygen )
 	dev-util/intltool
 	virtual/pkgconfig"
 
-DOCS=( AUTHORS README NEWS )
+DOCS=( AUTHORS NEWS )
+QA_SONAME=( ".*/libalsapid.so" )
 
-PATCHES=(
-	"${FILESDIR}/${P}-python3.patch"
-	"${FILESDIR}/${P}-disable-gladish.patch"
-	"${FILESDIR}/${P}-configure-libdir.patch"
-	"${FILESDIR}/${P}-add-includes-for-getrlimit.patch"
-)
-
-src_prepare()
-{
+src_prepare() {
 	sed -i -e "s/RELEASE = False/RELEASE = True/" wscript
 	append-cxxflags '-std=c++11'
-
-	cp "${DISTDIR}/ladish-1-waf-2.0.22" ./waf || die
-	chmod +x ./waf || die
 
 	default
 }
@@ -64,12 +51,17 @@ src_configure() {
 		$(usex debug --debug '')
 		$(usex doc --doxygen '')
 		$(usex lash '--enable-liblash' '')
+		$(usex gtk '--enable-gladish' '')
 	)
+
 	waf-utils_src_configure "${mywafconfargs[@]}"
 }
 
 src_install() {
-	use doc && HTML_DOCS="${S}/build/default/html/*"
+	if use doc ; then
+		dodoc -r build/default/html/
+	fi
+
 	waf-utils_src_install
 	python_fix_shebang "${ED}"
 }
